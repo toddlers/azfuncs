@@ -1,0 +1,8 @@
+.git*
+.vscode
+local.settings.json
+test
+.venv
+.DS_Store
+__MACOSX
+__pycache__
