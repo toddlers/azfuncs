@@ -39,4 +39,4 @@ def get_token(storage_connection_string,
     except Exception as e:
         logging.debug(e)
     logging.debug(sas_signature)
-    return(f'https://+{storage_account_name}.blob.core.windows.net/{container_name}/{blob_name}?{sas_signature}')
+    return(f'https://{storage_account_name}.blob.core.windows.net/{container_name}/{blob_name}?{sas_signature}')
