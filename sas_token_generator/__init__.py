@@ -24,8 +24,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
     try:
         req_body = req.get_json()
+        logging.debug(req_body)
         container = req_body.get('container')
-        blob_name = req_body.get('blobbname')
+        blob_name = req_body.get('blobname')
         # if 'ttl' in  req_body:
         #     token_ttl = req_body.get('ttl')
         #     if token_ttl < 1:
@@ -38,7 +39,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=400,
             body='Invalid HTTP request body'
         )
-
+    logging.debug(f'Container Name: {container}')
+    logging.debug(f'Blob Name: {blob_name}')
     if container and blob_name:
         token = get_token(
             storage_connection_string,
