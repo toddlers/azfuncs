@@ -3,10 +3,10 @@ import json
 import os
 
 import azure.functions as func
-from .generate_token import get_token
+from .generate_token import get_signed_url
 
 _ALLOWED_HTTP_METHOD = "POST"
-
+_DEFAULT_SAS_EXPIRY_DAYS = 365 * 30
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
@@ -27,13 +27,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.debug(req_body)
         container = req_body.get('container')
         blob_name = req_body.get('blobname')
-        # if 'ttl' in  req_body:
-        #     token_ttl = req_body.get('ttl')
-        #     if token_ttl < 1:
-        #         return write_http_response(
-        #         400,
-        #         { 'message': 'Token ttl must be digit and more than 0' }
-        #     )
+        sas_ttl = _DEFAULT_SAS_EXPIRY_DAYS
+        if 'ttl' in  req_body:
+            token_ttl = req_body.get('ttl')
+            if token_ttl < 1:
+                return func.HttpResponse(
+                status_code=400,
+                body="Token ttl must be digit and more than 0"
+            )
     except ValueError:
         return func.HttpResponse(
             status_code=400,
@@ -41,20 +42,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
     logging.debug(f'Container Name: {container}')
     logging.debug(f'Blob Name: {blob_name}')
-    if container and blob_name:
-        token = get_token(
-            storage_connection_string,
-            container,
-            blob_name
-            )
-        logging.info(f'Token generated : {token}')
-        return func.HttpResponse(
-            body=token,
-            status_code=200,
-            headers=dict(req.headers)
-            )
-    else:
-        return func.HttpResponse(
-            body='Not able to generate token',
-            status_code=500
+    logging.debug(f'SAS TTL : {sas_ttl}')
+    generated_url = get_signed_url(
+        storage_connection_string,
+        container,
+        blob_name,
+        sas_ttl
+        )
+    logging.debug(f'URL generated : {generated_url}')
+    return func.HttpResponse(
+        body=json.dumps({
+            "url": generated_url
+        }),
+        status_code=200,
+        mimetype="application/json"
         )
