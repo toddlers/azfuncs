@@ -1,38 +1,58 @@
-import asyncio
-import os
 import logging
 import json
+import os
 
 import azure.functions as func
-from azure.identity import DefaultAzureCredential
-from .resource_group_operations import list_rgs
-from azure.mgmt.web import WebSiteManagementClient
+from .generate_token import get_token
 
-async def main(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    The main entry point to the function.
-    """
+_ALLOWED_HTTP_METHOD = "POST"
 
-    # if "MSI_ENDPOINT" in os.environ:
-    credentials = DefaultAzureCredential(logging_enable=True)
-    # else:
-    #     credentials, *_ = get_azure_cli_credentials()
-    
-    # logging.debug(credentials.__dict__())
-    subscription_id = os.environ.get(
-        'AZURE_SUBSCRIPTION_ID', '11111111-1111-1111-1111-111111111111')
-    
-    logging.debug(os.environ.get('ResourceGroupName'))
-    logging.debug(f'subscription id {subscription_id}')
-    #list_of_rgs = await list_rgs(credentials, subscription_id)
-    resource_group_name = 'spzpl'
-    name='spzpl'
 
-    web_client=WebSiteManagementClient(
-        credentials,
-        subscription_id
-    )
-    result =web_client.web_apps.get_configuration(resource_group_name, name,raw=True)
-    return func.HttpResponse(json.dumps(result.response.json()))
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+    storage_connection_string = os.environ.get('AzureWebJobsStorage')
+    logging.debug(storage_connection_string)
+    if not storage_connection_string:
+        return func.HttpResponse(
+            body='function configuration error',
+            status_code=400
+        )
+    if req.method.lower() != _ALLOWED_HTTP_METHOD.lower():
+        return func.HttpResponse(
+            body='Method not allowed',
+            status_code=403
+        )
+    try:
+        req_body = req.get_json()
+        container = req_body.get('container')
+        blob_name = req_body.get('blobbname')
+        # if 'ttl' in  req_body:
+        #     token_ttl = req_body.get('ttl')
+        #     if token_ttl < 1:
+        #         return write_http_response(
+        #         400,
+        #         { 'message': 'Token ttl must be digit and more than 0' }
+        #     )
+    except ValueError:
+        return func.HttpResponse(
+            status_code=400,
+            body='Invalid HTTP request body'
+        )
 
-    #return func.HttpResponse(list_of_rgs, mimetype="application/json")
+    if container and blob_name:
+        token = get_token(
+            storage_connection_string,
+            container,
+            blob_name
+            )
+        logging.info(f'Token generated : {token}')
+        return func.HttpResponse(
+            body=token,
+            status_code=200,
+            headers=dict(req.headers)
+            )
+    else:
+        return func.HttpResponse(
+            body='Not able to generate token',
+            status_code=500
+        )
