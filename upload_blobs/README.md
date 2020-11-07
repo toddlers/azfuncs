@@ -1,4 +1,4 @@
-The request has to be made in the following format with header as `Content-Type=application/json`
+* The request has to be made in the following format with header as `Content-Type=application/json`
 
 ```json
  {
