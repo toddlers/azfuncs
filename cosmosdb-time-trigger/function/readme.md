@@ -14,6 +14,8 @@ For a `TimerTrigger` to work, you provide a schedule in the form of a [cron expr
 ```
 This  setting in the `function.json` should be set to something like below
 
-```ConnectionStringSetting```
+```json
+"ConnectionStringSetting" : "<value>"
+```
 
 
