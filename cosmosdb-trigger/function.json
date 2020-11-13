@@ -1,0 +1,16 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "type": "cosmosDBTrigger",
+      "name": "documents",
+      "direction": "in",
+      "leaseCollectionName": "leases",
+      "connectionStringSetting": "ConnectionStringSetting",
+      "databaseName": "spzpl",
+      "collectionName": "feedcol",
+      "createLeaseCollectionIfNotExists": "true",
+      "createIfNotExists": true
+    }
+  ]
+}
